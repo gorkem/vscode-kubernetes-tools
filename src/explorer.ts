@@ -135,16 +135,20 @@ class KubernetesContextNode implements KubernetesObject {
     }
 
     getChildren(kubectl: Kubectl, host: Host): vscode.ProviderResult<KubernetesObject[]> {
-        return [
-            new KubernetesNamespaceFolder(),
-            new KubernetesNodeFolder(),
-            new KubernetesWorkloadFolder(),
-            new KubernetesSelectsPodsFolder(kuberesources.allKinds.service),
-            new KubernetesResourceFolder(kuberesources.allKinds.ingress),
-            new KubernetesStorageFolder(),
-            new KubernetesConfigFolder(),
-            new HelmReleasesFolder(),
-        ];
+        return kubectlUtils.isOpenshift(kubectl).then( (isOS) => {
+            const ingressResource = isOS ? kuberesources.allKinds.route : kuberesources.allKinds.ingress ;
+            return [
+                new KubernetesNamespaceFolder(),
+                new KubernetesNodeFolder(),
+                new KubernetesWorkloadFolder(),
+                new KubernetesSelectsPodsFolder(kuberesources.allKinds.service),
+                new KubernetesResourceFolder(kuberesources.allKinds.ingress),
+                new KubernetesStorageFolder(),
+                new KubernetesResourceFolder(ingressResource),
+                new KubernetesConfigFolder(),
+                new HelmReleasesFolder(),
+            ];
+        });
     }
 
     getTreeItem(): vscode.TreeItem | Thenable<vscode.TreeItem> {
