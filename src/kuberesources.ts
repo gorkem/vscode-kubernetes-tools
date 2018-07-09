@@ -29,6 +29,7 @@ export const allKinds: Dictionary<ResourceKind> = {
     persistentVolumeClaim: new ResourceKind("Persistent Volume Claim", "Persistent Volume Claims", "PersistentVolumeClaim", "pvc"),
     storageClass: new ResourceKind("Storage Class", "Storage Classes", "StorageClass", "sc"),
     statefulSet: new ResourceKind("StatefulSet", "StatefulSets", "StatefulSet", "statefulset"),
+    route: new ResourceKind("Routes", "Routes", "route", "route" )
 };
 
 export const commonKinds = [
