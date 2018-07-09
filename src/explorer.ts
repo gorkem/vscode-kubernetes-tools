@@ -6,7 +6,6 @@ import * as kubectlUtils from './kubectlUtils';
 import { Host } from './host';
 import * as kuberesources from './kuberesources';
 import { failed } from './errorable';
-import * as helmexec from './helm.exec';
 import { Pod, CRD } from './kuberesources.objectmodel';
 import { kubefsUri } from './kuberesources.virtualfs';
 import { affectsUs } from './components/config/config';
@@ -134,17 +133,21 @@ class KubernetesContextNode implements KubernetesObject {
         return KUBERNETES_CLUSTER;
     }
 
-    getChildren(_kubectl: Kubectl, _host: Host): vscode.ProviderResult<KubernetesObject[]> {
-        return [
-            new KubernetesNamespaceFolder(),
-            new KubernetesNodeFolder(),
-            new KubernetesWorkloadFolder(),
-            new KubernetesNetworkFolder(),
-            new KubernetesStorageFolder(),
-            new KubernetesConfigFolder(),
-            new KubernetesCRDFolder(),
-            new HelmReleasesFolder(),
-        ];
+    getChildren(kubectl: Kubectl, host: Host): vscode.ProviderResult<KubernetesObject[]> {
+        return kubectlUtils.isOpenshift(kubectl).then( (isOS) => {
+            const ingressResource = isOS ? kuberesources.allKinds.route : kuberesources.allKinds.ingress ;
+            return [
+                new KubernetesNamespaceFolder(),
+                new KubernetesNodeFolder(),
+                new KubernetesWorkloadFolder(),
+                new KubernetesNetworkFolder(),
+                new KubernetesStorageFolder(),
+                new KubernetesResourceFolder(ingressResource),
+                new KubernetesConfigFolder(),
+                new KubernetesCRDFolder()
+            ];
+        });
+
     }
 
     getTreeItem(): vscode.TreeItem | Thenable<vscode.TreeItem> {
@@ -499,51 +502,5 @@ export class KubernetesFileObject implements KubernetesObject {
 
     getChildren(_kubectl: Kubectl, _host: Host): vscode.ProviderResult<KubernetesObject[]> {
         return [];
-    }
-}
-
-class HelmReleaseResource implements KubernetesObject {
-    readonly id: string;
-
-    constructor(readonly name: string, readonly status: string) {
-        this.id = "helmrelease:" + name;
-    }
-
-    getChildren(_kubectl: Kubectl, _host: Host): vscode.ProviderResult<KubernetesObject[]> {
-        return [];
-    }
-
-    getTreeItem(): vscode.TreeItem | Thenable<vscode.TreeItem> {
-        const treeItem = new vscode.TreeItem(this.name, vscode.TreeItemCollapsibleState.None);
-        treeItem.command = {
-            command: "extension.helmGet",
-            title: "Get",
-            arguments: [this]
-        };
-        treeItem.contextValue = "vsKubernetes.helmRelease";
-        treeItem.iconPath = getIconForHelmRelease(this.status.toLowerCase());
-        return treeItem;
-    }
-}
-
-class HelmReleasesFolder extends KubernetesFolder {
-    constructor() {
-        super("Helm Release", "Helm Releases", "vsKubernetes.nonResourceFolder");
-    }
-
-    async getChildren(kubectl: Kubectl, _host: Host): Promise<KubernetesObject[]> {
-        if (!helmexec.ensureHelm(helmexec.EnsureMode.Silent)) {
-            return [new DummyObject("Helm client is not installed")];
-        }
-
-        const currentNS = await kubectlUtils.currentNamespace(kubectl);
-
-        const releases = await helmexec.helmListAll(currentNS);
-
-        if (failed(releases)) {
-            return [new DummyObject("Helm list error", releases.error[0])];
-        }
-
-        return releases.result.map((r) => new HelmReleaseResource(r.name, r.status));
     }
 }
