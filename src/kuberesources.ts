@@ -26,6 +26,7 @@ export const allKinds = {
     persistentVolumeClaim: new ResourceKind("Persistent Volume Claim", "Persistent Volume Claims", "PersistentVolumeClaim", "pvc"),
     storageClass: new ResourceKind("Storage Class", "Storage Classes", "StorageClass", "sc"),
     statefulSet: new ResourceKind("StatefulSet", "StatefulSets", "StatefulSet", "statefulset"),
+    route: new ResourceKind("Routes", "Routes", "Routes", "routes" )
 };
 
 export const commonKinds = [

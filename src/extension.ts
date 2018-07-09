@@ -33,19 +33,10 @@ import { kubeChannel } from './kubeChannel';
 import { create as kubectlCreate } from './kubectl';
 import * as kubectlUtils from './kubectlUtils';
 import * as explorer from './explorer';
-import * as helmRepoExplorer from './helm.repoExplorer';
-import { create as draftCreate, CheckPresentMode as DraftCheckPresentMode } from './draft/draft';
-import { create as minikubeCreate, CheckPresentMode as MinikubeCheckPresentMode } from './components/clusterprovider/minikube/minikube';
-import * as logger from './logger';
-import * as helm from './helm';
-import * as helmexec from './helm.exec';
-import * as helmauthoring from './helm.authoring';
-import { HelmRequirementsCodeLensProvider } from './helm.requirementsCodeLens';
-import { HelmTemplateHoverProvider } from './helm.hoverProvider';
-import { HelmTemplatePreviewDocumentProvider, HelmInspectDocumentProvider, HelmDependencyDocumentProvider } from './helm.documentProvider';
-import { HelmTemplateCompletionProvider } from './helm.completionProvider';
+
 import { Reporter } from './telemetry';
 import * as telemetry from './telemetry-helper';
+
 import * as extensionapi from './extension.api';
 import { dashboardKubernetes } from './components/kubectl/dashboard';
 import { portForwardKubernetes } from './components/kubectl/port-forward';
@@ -58,19 +49,15 @@ import * as config from './components/config/config';
 
 import { registerYamlSchemaSupport } from './yaml-support/yaml-schema';
 import * as clusterproviderregistry from './components/clusterprovider/clusterproviderregistry';
-import * as azureclusterprovider from './components/clusterprovider/azure/azureclusterprovider';
-import * as minikubeclusterprovider from './components/clusterprovider/minikube/minikubeclusterprovider';
-import { MinikubeOptions } from './components/clusterprovider/minikube/minikube';
 import { refreshExplorer } from './components/clusterprovider/common/explorer';
 import { KubernetesCompletionProvider } from "./yaml-support/yaml-snippet";
 import { showWorkspaceFolderPick } from './hostutils';
-import { DraftConfigurationProvider } from './draft/draftConfigurationProvider';
-import { installHelm, installDraft, installKubectl, installMinikube } from './components/installer/installer';
+
+import { installKubectl } from './components/installer/installer';
 import { KubernetesResourceVirtualFileSystemProvider, K8S_RESOURCE_SCHEME, KUBECTL_RESOURCE_AUTHORITY, kubefsUri } from './kuberesources.virtualfs';
 import { KubernetesResourceLinkProvider } from './kuberesources.linkprovider';
 import { Container, isKubernetesResource, KubernetesCollection, Pod, KubernetesResource } from './kuberesources.objectmodel';
 import { setActiveKubeconfig, getKnownKubeconfigs, addKnownKubeconfig } from './components/config/config';
-import { HelmDocumentSymbolProvider } from './helm.symbolProvider';
 import { findParentYaml } from './yaml-support/yaml-navigation';
 import { linters } from './components/lint/linters';
 
@@ -80,8 +67,6 @@ let swaggerSpecPromise = null;
 const kubernetesDiagnostics = vscode.languages.createDiagnosticCollection("Kubernetes");
 
 const kubectl = kubectlCreate(host, fs, shell, installDependencies);
-const draft = draftCreate(host, fs, shell, installDependencies);
-const minikube = minikubeCreate(host, fs, shell, installDependencies);
 const configureFromClusterUI = configureFromCluster.uiProvider();
 const createClusterUI = createCluster.uiProvider();
 const clusterProviderRegistry = clusterproviderregistry.get();
@@ -108,34 +93,14 @@ export const deleteMessageItems: vscode.MessageItem[] = [
     }
 ];
 
-// Filters for different Helm file types.
-// TODO: Consistently apply these to the providers registered.
-export const HELM_MODE: vscode.DocumentFilter = { language: "helm", scheme: "file" };
-export const HELM_REQ_MODE: vscode.DocumentFilter = { language: "helm", scheme: "file", pattern: "**/requirements.yaml"};
-export const HELM_CHART_MODE: vscode.DocumentFilter = { language: "helm", scheme: "file", pattern: "**/Chart.yaml" };
-export const HELM_TPL_MODE: vscode.DocumentFilter = { language: "helm", scheme: "file", pattern: "**/templates/*.*" };
-
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export async function activate(context): Promise<extensionapi.ExtensionAPI> {
     kubectl.checkPresent('activation');
 
     const treeProvider = explorer.create(kubectl, host);
-    const helmRepoTreeProvider = helmRepoExplorer.create(host);
     const resourceDocProvider = new KubernetesResourceVirtualFileSystemProvider(kubectl, host, vscode.workspace.rootPath);
     const resourceLinkProvider = new KubernetesResourceLinkProvider();
-    const previewProvider = new HelmTemplatePreviewDocumentProvider();
-    const inspectProvider = new HelmInspectDocumentProvider();
-    const dependenciesProvider = new HelmDependencyDocumentProvider();
-    const helmSymbolProvider = new HelmDocumentSymbolProvider();
-    const completionProvider = new HelmTemplateCompletionProvider();
-    const completionFilter = [
-        "helm",
-        {pattern: "**/templates/NOTES.txt"}
-    ];
-
-    const draftDebugProvider = new DraftConfigurationProvider();
-    let draftDebugSession: vscode.DebugSession;
 
     const subscriptions = [
 
@@ -165,24 +130,12 @@ export async function activate(context): Promise<extensionapi.ExtensionAPI> {
         registerCommand('extension.vsKubernetesConfigureFromCluster', configureFromClusterKubernetes),
         registerCommand('extension.vsKubernetesCreateCluster', createClusterKubernetes),
         registerCommand('extension.vsKubernetesRefreshExplorer', () => treeProvider.refresh()),
-        registerCommand('extension.vsKubernetesRefreshHelmRepoExplorer', () => helmRepoTreeProvider.refresh()),
         registerCommand('extension.vsKubernetesUseContext', useContextKubernetes),
         registerCommand('extension.vsKubernetesUseKubeconfig', useKubeconfigKubernetes),
         registerCommand('extension.vsKubernetesClusterInfo', clusterInfoKubernetes),
         registerCommand('extension.vsKubernetesDeleteContext', deleteContextKubernetes),
         registerCommand('extension.vsKubernetesUseNamespace', (explorerNode: explorer.KubernetesObject) => { useNamespaceKubernetes(kubectl, explorerNode); } ),
         registerCommand('extension.vsKubernetesDashboard', () => { dashboardKubernetes(kubectl); }),
-        registerCommand('extension.vsMinikubeStop', () => minikube.stop()),
-        registerCommand('extension.vsMinikubeStart', () => minikube.start({} as MinikubeOptions)),
-        registerCommand('extension.vsMinikubeStatus', async () => {
-            try {
-                const status = await minikube.status();
-                const isRunning = status.running ? "running" : "stopped";
-                vscode.window.showInformationMessage(`Minikube is ${isRunning}`);
-            } catch (err) {
-                vscode.window.showErrorMessage(`Error getting status ${err}`);
-            }
-        }),
         registerCommand('extension.vsKubernetesCopy', copyKubernetes),
         registerCommand('extension.vsKubernetesPortForward', (explorerNode: explorer.ResourceNode) => { portForwardKubernetes(kubectl, explorerNode); }),
         registerCommand('extension.vsKubernetesLoadConfigMapData', configmaps.loadConfigMapData),
@@ -190,47 +143,13 @@ export async function activate(context): Promise<extensionapi.ExtensionAPI> {
         registerCommand('extension.vsKubernetesAddFile', (explorerNode: explorer.KubernetesDataHolderResource) => { addKubernetesConfigFile(kubectl, explorerNode, treeProvider); }),
         registerCommand('extension.vsKubernetesShowEvents', (explorerNode: explorer.ResourceNode) => { getEvents(kubectl, EventDisplayMode.Show, explorerNode); }),
         registerCommand('extension.vsKubernetesFollowEvents', (explorerNode: explorer.ResourceNode) => { getEvents(kubectl, EventDisplayMode.Follow, explorerNode); }),
-        // Commands - Helm
-        registerCommand('extension.helmVersion', helmexec.helmVersion),
-        registerCommand('extension.helmTemplate', helmexec.helmTemplate),
-        registerCommand('extension.helmTemplatePreview', helmexec.helmTemplatePreview),
-        registerCommand('extension.helmLint', helmexec.helmLint),
-        registerCommand('extension.helmInspectValues', helmexec.helmInspectValues),
-        registerCommand('extension.helmInspectChart', helmexec.helmInspectChart),
-        registerCommand('extension.helmDryRun', helmexec.helmDryRun),
-        registerCommand('extension.helmDepUp', helmexec.helmDepUp),
-        registerCommand('extension.helmInsertReq', helmexec.insertRequirement),
-        registerCommand('extension.helmCreate', helmexec.helmCreate),
-        registerCommand('extension.helmGet', helmexec.helmGet),
-        registerCommand('extension.helmPackage', helmexec.helmPackage),
-        registerCommand('extension.helmFetch', helmexec.helmFetch),
-        registerCommand('extension.helmInstall', (o) => helmexec.helmInstall(kubectl, o)),
-        registerCommand('extension.helmDependencies', helmexec.helmDependencies),
-        registerCommand('extension.helmConvertToTemplate', helmConvertToTemplate),
-        registerCommand('extension.helmParameterise', helmParameterise),
-
-        // Commands - Draft
-        registerCommand('extension.draftVersion', execDraftVersion),
-        registerCommand('extension.draftCreate', execDraftCreate),
-        registerCommand('extension.draftUp', execDraftUp),
-
-        // Draft debug configuration provider
-        vscode.debug.registerDebugConfigurationProvider('draft', draftDebugProvider),
 
         // HTML renderers
         vscode.workspace.registerTextDocumentContentProvider(configureFromCluster.uriScheme, configureFromClusterUI),
         vscode.workspace.registerTextDocumentContentProvider(createCluster.uriScheme, createClusterUI),
-        vscode.workspace.registerTextDocumentContentProvider(helm.PREVIEW_SCHEME, previewProvider),
-        vscode.workspace.registerTextDocumentContentProvider(helm.INSPECT_VALUES_SCHEME, inspectProvider),
-        vscode.workspace.registerTextDocumentContentProvider(helm.INSPECT_CHART_SCHEME, inspectProvider),
-        vscode.workspace.registerTextDocumentContentProvider(helm.DEPENDENCIES_SCHEME, dependenciesProvider),
 
         // Completion providers
-        vscode.languages.registerCompletionItemProvider(completionFilter, completionProvider),
         vscode.languages.registerCompletionItemProvider('yaml', new KubernetesCompletionProvider()),
-
-        // Symbol providers
-        vscode.languages.registerDocumentSymbolProvider({ language: 'helm' }, helmSymbolProvider),
 
         // Hover providers
         vscode.languages.registerHoverProvider(
@@ -241,11 +160,9 @@ export async function activate(context): Promise<extensionapi.ExtensionAPI> {
             { language: 'yaml' },
             { provideHover: provideHoverYaml }
         ),
-        vscode.languages.registerHoverProvider(HELM_MODE, new HelmTemplateHoverProvider()),
 
         // Tree data providers
         vscode.window.registerTreeDataProvider('extension.vsKubernetesExplorer', treeProvider),
-        vscode.window.registerTreeDataProvider('extension.vsKubernetesHelmRepoExplorer', helmRepoTreeProvider),
 
         // Temporarily loaded resource providers
         vscode.workspace.registerFileSystemProvider(K8S_RESOURCE_SCHEME, resourceDocProvider, { /* TODO: case sensitive? */ }),
@@ -253,83 +170,9 @@ export async function activate(context): Promise<extensionapi.ExtensionAPI> {
         // Link from resources to referenced resources
         vscode.languages.registerDocumentLinkProvider({ scheme: K8S_RESOURCE_SCHEME }, resourceLinkProvider),
 
-        // Code lenses
-        vscode.languages.registerCodeLensProvider(HELM_REQ_MODE, new HelmRequirementsCodeLensProvider()),
-
         // Telemetry
-        registerTelemetry(context)
+        // registerTelemetry(context)
     ];
-
-    telemetry.invalidateClusterType(undefined, kubectl);
-
-    await azureclusterprovider.init(clusterProviderRegistry, { shell: shell, fs: fs });
-    await minikubeclusterprovider.init(clusterProviderRegistry, { shell: shell, minikube: minikube });
-    // On save, refresh the Helm YAML preview.
-    vscode.workspace.onDidSaveTextDocument((e: vscode.TextDocument) => {
-        if (!editorIsActive()) {
-            if (helm.hasPreviewBeenShown()) {
-                logger.helm.log("WARNING: No active editor during save. Helm preview was not updated.");
-            }
-            return;
-        }
-        if (e === vscode.window.activeTextEditor.document) {
-            const doc = vscode.window.activeTextEditor.document;
-            if (doc.uri.scheme !== "file") {
-                return;
-            }
-            const u = vscode.Uri.parse(helm.PREVIEW_URI);
-            previewProvider.update(u);
-        }
-
-        // if there is an active Draft debugging session, restart the cycle
-        if (draftDebugSession !== undefined) {
-            const session = vscode.debug.activeDebugSession;
-
-            // TODO - how do we make sure this doesn't affect all other debugging sessions?
-            // TODO - maybe check to see if `draft.toml` is present in the workspace
-            // TODO - check to make sure we enable this only when Draft is installed
-            if (session !== undefined) {
-                draftDebugSession.customRequest('evaluate', { restart: true });
-            }
-        }
-    });
-
-    vscode.debug.onDidTerminateDebugSession((e) => {
-
-        // if there is an active Draft debugging session, restart the cycle
-        if (draftDebugSession !== undefined) {
-            const session = vscode.debug.activeDebugSession;
-
-            // TODO - how do we make sure this doesn't affect all other debugging sessions?
-            // TODO - maybe check to see if `draft.toml` is present in the workspace
-            // TODO - check to make sure we enable this only when Draft is installed
-            if (session !== undefined) {
-                draftDebugSession.customRequest('evaluate', { stop: true });
-            }
-        }
-    });
-
-    // On editor change, refresh the Helm YAML preview
-    vscode.window.onDidChangeActiveTextEditor((e: vscode.TextEditor) => {
-        if (!editorIsActive()) {
-            return;
-        }
-        const doc = vscode.window.activeTextEditor.document;
-        if (doc.uri.scheme !== "file") {
-            return;
-        }
-        const u = vscode.Uri.parse(helm.PREVIEW_URI);
-        previewProvider.update(u);
-    });
-
-    vscode.debug.onDidChangeActiveDebugSession((e: vscode.DebugSession)=> {
-        if (e !== undefined) {
-            // keep a copy of the initial Draft debug session
-            if (e.name.indexOf('Draft') >= 0) {
-                draftDebugSession = e;
-            }
-        }
-    });
 
     vscode.workspace.onDidOpenTextDocument(kubernetesLint);
     vscode.workspace.onDidChangeTextDocument((e) => kubernetesLint(e.document));  // TODO: we could use the change hint
@@ -353,8 +196,7 @@ export async function activate(context): Promise<extensionapi.ExtensionAPI> {
 export const deactivate = () => { };
 
 function registerCommand(command: string, callback: (...args: any[]) => any): vscode.Disposable {
-    const wrappedCallback = telemetry.telemetrise(command, kubectl, callback);
-    return vscode.commands.registerCommand(command, wrappedCallback);
+    return vscode.commands.registerCommand(command, callback);
 }
 
 function registerTelemetry(context: vscode.ExtensionContext): vscode.Disposable {
@@ -1476,7 +1318,7 @@ function diffKubernetesCore(callback: (r: DiffResult) => void): void {
             fileUri = file;
             if (vscode.window.activeTextEditor && vscode.window.activeTextEditor.document) {
                 const langId = vscode.window.activeTextEditor.document.languageId.toLowerCase();
-                if (langId === "yaml" || langId === "helm") {
+                if (langId === "yaml") {
                     fileFormat = "yaml";
                 }
             }
@@ -1774,16 +1616,8 @@ function copyKubernetes(explorerNode: explorer.KubernetesObject) {
 export async function installDependencies() {
     // TODO: gosh our binchecking is untidy
     const gotKubectl = await kubectl.checkPresent('silent');
-    const gotHelm = helmexec.ensureHelm(helmexec.EnsureMode.Silent);
-    const gotDraft = await draft.checkPresent(DraftCheckPresentMode.Silent);
-    const gotMinikube = await minikube.checkPresent(MinikubeCheckPresentMode.Silent);
-
     // TODO: parallelise
     await installDependency("kubectl", gotKubectl, installKubectl);
-    await installDependency("Helm", gotHelm, installHelm);
-    await installDependency("Draft", gotDraft, installDraft);
-    await installDependency("Minikube", gotMinikube, installMinikube);
-
     kubeChannel.showOutput("Done");
 }
 
@@ -1799,141 +1633,13 @@ async function installDependency(name: string, alreadyGot: boolean, installFunc:
     }
 }
 
-async function execDraftVersion() {
-    if (!(await draft.checkPresent(DraftCheckPresentMode.Alert))) {
-        return;
-    }
-
-    const dvResult = await draft.version();
-
-    if (succeeded(dvResult)) {
-        host.showInformationMessage(dvResult.result);
-    } else if (dvResult.error[0]) {
-        host.showErrorMessage(dvResult.error[0]);
-    }
-}
-
-async function execDraftCreate() {
-    if (vscode.workspace.rootPath === undefined) {
-        vscode.window.showErrorMessage('This command requires an open folder.');
-        return;
-    }
-    if (draft.isFolderMapped(vscode.workspace.rootPath)) {
-        vscode.window.showInformationMessage('This folder is already configured for draft. Run draft up to deploy.');
-        return;
-    }
-    if (!(await draft.checkPresent(DraftCheckPresentMode.Alert))) {
-        return;
-    }
-    const proposedAppName = path.basename(vscode.workspace.rootPath);
-    const appName = await vscode.window.showInputBox({ value: proposedAppName, prompt: "Choose a name for the Helm release"});
-    if (appName) {
-        await execDraftCreateApp(appName, undefined);
-    }
-}
-
-enum DraftCreateResult {
-    Succeeded,
-    Fatal,
-    NeedsPack,
-}
-
-async function execDraftCreateApp(appName: string, pack?: string): Promise<void> {
-    const packOpt = pack ? ` -p ${pack}` : '';
-    const dcResult = await draft.create(appName, pack, vscode.workspace.rootPath);
-
-    switch (draftCreateResult(dcResult, !!pack)) {
-        case DraftCreateResult.Succeeded:
-            host.showInformationMessage("draft " + dcResult.stdout);
-            return;
-        case DraftCreateResult.Fatal:
-            host.showErrorMessage(`draft failed: ${dcResult.stderr}`);
-            return;
-        case DraftCreateResult.NeedsPack:
-            const packs = await draft.packs();
-            if (packs && packs.length > 0) {
-                const packSel = await host.showQuickPick(packs, { placeHolder: `Choose the Draft starter pack for ${appName}` });
-                if (packSel) {
-                    await execDraftCreateApp(appName, packSel);
-                }
-            } else {
-                host.showErrorMessage("Unable to determine starter pack, and no starter packs found to choose from.");
-            }
-            return;
-    }
-}
-
-function draftCreateResult(sr: ShellResult, hadPack: boolean) {
-    if (sr.code === 0) {
-        return DraftCreateResult.Succeeded;
-    }
-    if (!hadPack && draftErrorMightBeSolvedByChoosingPack(sr.stderr)) {
-        return DraftCreateResult.NeedsPack;
-    }
-    return DraftCreateResult.Fatal;
-}
-
-function draftErrorMightBeSolvedByChoosingPack(draftError: string) {
-    return draftError.indexOf('Unable to select a starter pack') >= 0
-        || draftError.indexOf('Error: no languages were detected') >= 0;
-}
-
-async function execDraftUp() {
-    if (vscode.workspace.rootPath === undefined) {
-        vscode.window.showErrorMessage('This command requires an open folder.');
-        return;
-    }
-    if (!draft.isFolderMapped(vscode.workspace.rootPath)) {
-        vscode.window.showInformationMessage('This folder is not configured for draft. Run draft create to configure it.');
-        return;
-    }
-
-    await draft.up();
-}
-
 function editorIsActive(): boolean {
     // force type coercion
     return (vscode.window.activeTextEditor) ? true : false;
 }
 
-async function helmConvertToTemplate(arg?: any) {
-    const workspace = await showWorkspaceFolderPick();
-    if (!workspace) {
-        return;
-    }
-    helmauthoring.convertToTemplate(fs, host, workspace.uri.fsPath, arg);
-}
-
-async function helmParameterise() {
-    const activeEditor = vscode.window.activeTextEditor;
-    if (!activeEditor) {
-        return;
-    }
-
-    const document = activeEditor.document;
-    if (!document) {
-        return;
-    }
-
-    const selection = activeEditor.selection;
-    if (!selection) {
-        return;
-    }
-
-    const convertResult = await helmauthoring.convertToParameter(fs, host, document, selection);
-
-    if (succeeded(convertResult)) {
-        const editor = await vscode.window.showTextDocument(convertResult.result.document);
-        const edit = convertResult.result.edit;
-        editor.revealRange(edit.range);
-        editor.selection = new vscode.Selection(edit.range.start, edit.range.end);  // TODO: this isn't quite right because it gives us the insert-at selection not the resultant edit
-    } else {
-        vscode.window.showErrorMessage(convertResult.error[0]);
-    }
-}
-
 function isLintable(document: vscode.TextDocument): boolean {
-    return document.languageId === 'yaml' || document.languageId === 'json' || document.languageId === 'helm';
+    return document.languageId === 'yaml' || document.languageId === 'json';
 }
 
 async function kubernetesLint(document: vscode.TextDocument): Promise<void> {
