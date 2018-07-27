@@ -1,42 +1,3 @@
-<<<<<<< HEAD
-# Visual Studio Code OpenShift Tools
-
-A Visual Studio Code extension for interacting with OpenShift clusters. This extension combines
-the `vs-kubernetes` extension by @brendandburns and the `vs-helm` extension by @technosophos.
-
-## Configuring
-
-### Setting up your environment
-
-This extension assumes that you have a `Dockerfile` in the root directory of
-your project.
-
-It also assumes that you have the following binaries on your `PATH`:
-
-   * `kubectl`
-   * `docker`
-   * `git`
-   * `helm` (optional)
-   * `draft` (optional)
-
-For `kubectl`, `helm` and `draft` the binaries need not be on the system PATH, provided you tell the extension their locations using the appropriate `vs-kubernetes -> vs-kubernetes.${tool}-path` configuration setting.  See "Extension Settings" below.
-
-The extension can install `kubectl`, `helm` and `draft` for you if they are missing - choose **Install dependencies** when you see an error notification for the missing tool.  This will set `kubectl-path`, `helm-path` and `draft-path` entries in your configuration - the programs will *not* be installed on the system PATH, but this will be sufficient for them to work with the extension.
-
-If you are working with Azure Container Services or Azure Kubernetes Services, then you can install and configure `kubectl` using the `Kubernetes: Add Existing Cluster` command.
-
-If you plan to create managed clusters using Microsoft Azure (ACS or AKS), or to add clusters in those environments to your kubeconfig, then you will need Azure CLI 2.0.23 or above.  You do not need Azure CLI if you do not use Azure, or to interact with Azure clusters that are already in your kubeconfig.
-
-### Setting up your environment for Helm and Draft
-
-`helm` support requires that you have Helm installed and configured.
-
-To use the `Helm: DryRun` command, your Kubernetes cluster must be running Tiller.
-
-For setting up `draft` you can provide a path to the binary via configuration (`vs-kubernetes.draft-path`) if it is not on your PATH.
-
-### Setting up the image repository path
-=======
 # Visual Studio Code Kubernetes Tools
 [![Build Status](https://travis-ci.org/Azure/vscode-kubernetes-tools.svg?branch=master)](https://travis-ci.org/Azure/vscode-kubernetes-tools)
 
@@ -63,6 +24,10 @@ and for DevOps staff troubleshooting Kubernetes applications.  Features include:
 
 ## Getting started with the extension
 
+### Install
+
+[Open this extension in the Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=ms-kubernetes-tools.vscode-kubernetes-tools)
+
 ### Dependencies
 
 The Kubernetes extension may need to invoke the following command line tools, depending on
@@ -83,7 +48,6 @@ extension needs one of the core Kubernetes tools and it's missing, it will offer
 install it for you.
 
 ### Configuration settings for building and running applications
->>>>>>> 405149d0b197b896b007a70380476cd6f2585efb
 
 If you want to use the `Kubernetes: Run` and `Kubernetes: Debug` features
 then you need to configure a user and repository for your Docker
@@ -111,6 +75,14 @@ if no KUBECONFIG environment variable exists. You can override this using the
 If you want to swap between multiple kubeconfig files, you can list them in the
 `vs-kubernetes.knownKubeconfigs` configuration setting and switch between them
 using the `Set Kubeconfig` command.
+
+If you want to skip TLS verification for a particular cluster, you can edit your ~/.kube/config and set the ```insecure-skip-tls-verify: true``` flag under the proper cluster:
+```
+- cluster:
+    insecure-skip-tls-verify: true
+    server: https://my-insecure-cluster:443
+    name: my-insecure-cluster:443
+```
 
 ## Commands and features
 
@@ -205,7 +177,7 @@ Minikube tools to be installed and available on your PATH.
 
 ### Draft
 
-[Draft](http://blog.kubernetes.io/2017/05/draft-kubernetes-container-development.html) is a tool to simplify the process of developing a new Kubernetes application, by creating the necessary deployment components and by keeping code in the cluster in sync with the code on your computer.
+[Draft](https://kubernetes.io/blog/2017/05/draft-kubernetes-container-development/) is a tool to simplify the process of developing a new Kubernetes application, by creating the necessary deployment components and by keeping code in the cluster in sync with the code on your computer.
 
   * `Draft: Create` - Set up Draft in the current folder (prerequisite for `Draft: Up`)
   * `Draft: Up` - Runs Draft to package the current folder and push it to your cluster. To allow for cluster changes,
@@ -226,6 +198,8 @@ Minikube tools to be installed and available on your PATH.
        * `vs-kubernetes.autoCleanupOnDebugTerminate` - The flag to control whether to auto cleanup the created deployment and associated pod by the command "Kubernetes: Debug (Launch)". The cleanup action occurs when it failed to start debug session or debug session terminated. If not specified, the extension will prompt for whether to clean up or not. You might choose not to clean up if you wanted to view pod logs, etc.
        * `vs-kubernetes.outputFormat` - The output format that you prefer to view Kubernetes manifests in. One of "yaml" or "json". Defaults to "yaml".
    * `vsdocker.imageUser` - Image prefix for docker images e.g. 'docker.io/brendanburns'
+   * `disable-lint` - Disable all linting of Kubernetes files
+   * `disable-linters` - Disable specific linters by name
 
 ## Custom tool locations
 
@@ -263,6 +237,11 @@ The following commands support arguments in keybindings:
 
   * **Set Kubeconfig** (command ID `extension.vsKubernetesUseKubeconfig`) - the keybinding can specify a string argument which is the kubeconfig file path to switch to.  This allows you to set up specific keybindings for your favourite kubeconfigs.
 
+## Linters
+The extension supports linting Kubernetes YAML files for potential problems or suggestions.
+Here are the various linters, you can enable or disable them individually using the `disable-linters` configuration value.
+  * `resource-limits`: Warn when a Pod is missing resource limits
+
 ## Known issues
 
   * `Kubernetes: Debug` command currently works only with Node.js and Java applications
@@ -279,14 +258,15 @@ This extension collects telemetry data to help us build a better experience for 
 * Which commands are executed, and whether they are executed against an Azure, Minikube or other type of cluster.
 * For the `Create Cluster` and `Configure from Cluster` commands, the cluster type selected.
 
-<<<<<<< HEAD
-We do not collect any information about image names, paths, etc. The extension respects the `telemetry.enableTelemetry` setting which you can learn more about in our [FAQ](https://code.visualstudio.com/docs/supporting/faq#_how-to-disable-telemetry-reporting).
-=======
 We do not collect any information about image names, paths, etc. We collect cluster type information only if the cluster is Azure or Minikube. The extension respects the `telemetry.enableTelemetry` setting which you can learn more about in our [FAQ](https://code.visualstudio.com/docs/supporting/faq#_how-to-disable-telemetry-reporting).
 
 ## Running from source
 
 If you are building and running the extension from source, see [CONTRIBUTING.md](CONTRIBUTING.md) for prerequisites for the development environment.
+
+## Installing from VSIX
+
+If you are installing the extension from its VSIX, note that the machine will still need to reach the Visual Studio Marketplace in order to download extension dependencies.  If the machine cannot reach the Marketplace, you will need to install these dependencies manually using their VSIXes.  The list of extension dependencies can be found in `package.json`, in the `extensionDependencies` section.
 
 ## Contributing
 
@@ -308,4 +288,3 @@ For technical information about contributing, see [CONTRIBUTING.md](CONTRIBUTING
 
 This extension was born from the `vs-kubernetes` extension by @brendandburns and
 the `vs-helm` extension by @technosophos.
->>>>>>> 405149d0b197b896b007a70380476cd6f2585efb
