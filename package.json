@@ -1,16 +1,15 @@
 {
-    "name": "vscode-kubernetes-tools",
-    "displayName": "Kubernetes",
-    "description": "Develop, deploy and debug Kubernetes applications",
-    "version": "0.1.10",
+    "name": "vscode-openshift-tools",
+    "displayName": "OpenShift",
+    "description": "Develop, deploy and debug OpenShift applications",
+    "version": "0.0.1",
     "preview": true,
-    "publisher": "ms-kubernetes-tools",
+    "publisher": "redhat",
     "engines": {
         "vscode": "^1.23.0"
     },
     "license": "MIT",
     "categories": [
-        "Azure",
         "Other"
     ],
     "keywords": [
@@ -18,10 +17,9 @@
         "k8s",
         "helm",
         "draft",
-        "azure"
+        "openshift"
     ],
-    "aiKey": "AIF-d9b70cd4-b9f9-4d70-929b-a071c400b217",
-    "icon": "images/k8s-logo.png",
+    "icon": "images/openshift.png",
     "activationEvents": [
         "onCommand:extension.vsKubernetesCreate",
         "onCommand:extension.vsKubernetesDelete",
@@ -826,6 +824,6 @@
     },
     "repository": {
         "type": "git",
-        "url": "https://github.com/Azure/vscode-kubernetes-tools"
+        "url": "https://github.com/redhat-developer/vscode-openshift-tools"
     }
 }

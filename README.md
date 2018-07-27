@@ -1,6 +1,6 @@
-# Visual Studio Code Kubernetes Tools
+# Visual Studio Code OpenShift Tools
 
-A Visual Studio Code extension for interacting with Kubernetes clusters.  This extension combines
+A Visual Studio Code extension for interacting with OpenShift.  This extension combines
 the `vs-kubernetes` extension by @brendandburns and the `vs-helm` extension by @technosophos.
 
 ## Configuring
