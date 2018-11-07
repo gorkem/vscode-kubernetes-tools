@@ -7,6 +7,7 @@ import { ActionResult, fromShellJson, fromShellExitCodeAndStandardError, fromShe
 import { Errorable, failed } from '../../../errorable';
 import * as compareVersions from 'compare-versions';
 import { sleep } from '../../../sleep';
+import { getActiveKubeconfig } from '../../config/config';
 
 export interface Context {
     readonly fs: FS;
@@ -190,11 +191,14 @@ export async function listAksLocations(context: Context): Promise<Errorable<Serv
         "canadaeast",
         "centralus",
         "eastus",
+        "eastus2",
         "uksouth",
         "westus",
         "westus2",
         "northeurope",
-        "westeurope"
+        "westeurope",
+        "southeastasia",
+        "japaneast"
     ];
     const previewRegions = [];
     const result = locationDisplayNamesEx(productionRegions, previewRegions, locations);
@@ -332,7 +336,7 @@ async function downloadKubectlCli(context: Context, clusterType: string): Promis
 }
 
 async function getCredentials(context: Context, clusterType: string, clusterName: string, clusterGroup: string, maxAttempts: number): Promise<any> {
-    const kubeconfig: string = vscode.workspace.getConfiguration('vs-kubernetes')['vs-kubernetes.kubeconfig'];
+    const kubeconfig = getActiveKubeconfig();
     const kubeconfigFileOption = kubeconfig ? `-f "${kubeconfig}"` : '';
     let attempts = 0;
     while (true) {

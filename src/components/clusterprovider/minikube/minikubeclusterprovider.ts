@@ -5,11 +5,13 @@ import * as clusterproviderregistry from '../clusterproviderregistry';
 import { styles, formStyles, waitScript, ActionResult, Diagnostic, fromShellExitCodeOnly } from '../../../wizard';
 import { propagationFields, formPage } from '../common/form';
 import { refreshExplorer } from '../common/explorer';
-import { succeeded, Failed } from '../../../errorable';
+import { succeeded, Failed, failed } from '../../../errorable';
 import { Shell } from '../../../shell';
+import { Minikube, MinikubeOptions } from './minikube';
 
 export interface Context {
     readonly shell: Shell;
+    readonly minikube: Minikube;
 }
 
 type HtmlRequestHandler = (
@@ -128,7 +130,25 @@ async function promptForConfiguration(previousData: any, context: Context, actio
         submitText: 'Start Minikube',
         previousData: previousData,
         formContent: `
-        <p>No configuration options (yet)</p>
+        <table style='width:50%'>
+        <tr>
+        <td>Minikube VM Driver</td>
+        <td style='text-align: right'><select name='vmdriver' id='vmdriver'>
+           <option selected='true'>virtualbox</option>
+           <option>vmwarefusion</option>
+           <option>kvm</option>
+           <option>xhyve</option>
+           <option>hyperv</option>
+           <option>hyperkit</option>
+           <option>kvm2</option>
+           <option>none</option>
+        </select></td>
+        </tr>
+        <tr>
+        <td>Additional Flags:</td>
+        <td style='text-align: right'><input name='additionalflags' type='text' value='' /></td>
+        </tr>
+        </table>
         `
     });
 }
@@ -149,15 +169,16 @@ async function runMinikubeCommand(context: Context, cmd: string): Promise<Action
 }
 
 async function createCluster(previousData: any, context: Context): Promise<string> {
-    const createResult = await runMinikubeCommand(context, 'minikube help');
+    const runnable = await context.minikube.isRunnable();
+    const createResult = {
+        actionDescription: 'creating cluster',
+        result: runnable
+    };
 
-    context.shell.exec('minikube start').then((sr) => {
-        if (sr.code === 0) {
-            vscode.window.showInformationMessage('Minikube cluster created.');
-        } else {
-            vscode.window.showErrorMessage(`Minikube cluster creation failed ${sr.stderr}`);
-        }
-    });
+    context.minikube.start({
+        vmDriver: previousData.vmdriver,
+        additionalFlags: previousData.additionalflags
+    } as MinikubeOptions);
 
     const title = createResult.result.succeeded ? 'Cluster creation has started' : `Error ${createResult.actionDescription}`;
     const message = succeeded(createResult.result) ?

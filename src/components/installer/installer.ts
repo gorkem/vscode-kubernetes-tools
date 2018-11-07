@@ -8,6 +8,7 @@ import * as tar from 'tar';
 import * as vscode from 'vscode';
 import { Shell, Platform } from '../../shell';
 import { Errorable, failed, succeeded } from '../../errorable';
+import { addPathToConfig, toolPathBaseKey } from '../config/config';
 
 export async function installKubectl(shell: Shell): Promise<Errorable<void>> {
     const tool = 'kubectl';
@@ -33,7 +34,7 @@ export async function installKubectl(shell: Shell): Promise<Errorable<void>> {
         fs.chmodSync(downloadFile, '0777');
     }
 
-    await addPathToConfig(`vs-kubernetes.${tool}-path`, downloadFile);
+    await addPathToConfig(toolPathBaseKey(tool), downloadFile);
     return { succeeded: true, result: null };
 }
 
@@ -59,6 +60,31 @@ export async function installDraft(shell: Shell): Promise<Errorable<void>> {
     return await installToolFromTar(tool, urlTemplate, shell);
 }
 
+export async function installMinikube(shell: Shell): Promise<Errorable<void>> {
+    const tool = 'minikube';
+    const os = platformUrlString(shell.platform());
+    if (!os) {
+        return { succeeded: false, error: ['Not supported on this OS'] };
+    }
+    const urlTemplate = "https://storage.googleapis.com/minikube/releases/v0.28.0/minikube-{os_placeholder}-amd64" + (shell.isWindows() ? '.exe' : '');
+    const url = urlTemplate.replace('{os_placeholder}', os);
+    const installFolder = getInstallFolder(shell, tool);
+    const executable = formatBin(tool, shell.platform());
+    const executableFullPath = path.join(installFolder, executable);
+    const downloadResult = await download.to(url, executableFullPath);
+    if (failed(downloadResult)) {
+        return { succeeded: false, error: ['Failed to download Minikube: error was ' + downloadResult.error[0]] };
+    }
+
+    if (shell.isUnix()) {
+        await shell.exec(`chmod +x ${executableFullPath}`);
+    }
+    const configKey = toolPathBaseKey(tool);
+    await addPathToConfig(configKey, executableFullPath);
+
+    return { succeeded: true, result: null };
+}
+
 async function installToolFromTar(tool: string, urlTemplate: string, shell: Shell, supported?: Platform[]): Promise<Errorable<void>> {
     const os = platformUrlString(shell.platform(), supported);
     if (!os) {
@@ -67,7 +93,7 @@ async function installToolFromTar(tool: string, urlTemplate: string, shell: Shel
     const installFolder = getInstallFolder(shell, tool);
     const executable = formatBin(tool, shell.platform());
     const url = urlTemplate.replace('{os_placeholder}', os);
-    const configKey = `vs-kubernetes.${tool}-path`;
+    const configKey = toolPathBaseKey(tool);
     return installFromTar(url, installFolder, executable, configKey);
 }
 
@@ -137,26 +163,4 @@ async function untar(sourceFile: string, destinationFolder: string): Promise<Err
     } catch (e) {
         return { succeeded: false, error: [ "tar extract failed" ] /* TODO: extract error from exception */ };
     }
-}
-
-async function addPathToConfig(configKey: string, executableFullPath: string): Promise<void> {
-    const config = vscode.workspace.getConfiguration().inspect("vs-kubernetes");
-    await addPathToConfigAtScope(configKey, executableFullPath, vscode.ConfigurationTarget.Global, config.globalValue, true);
-    await addPathToConfigAtScope(configKey, executableFullPath, vscode.ConfigurationTarget.Workspace, config.workspaceValue, false);
-    await addPathToConfigAtScope(configKey, executableFullPath, vscode.ConfigurationTarget.WorkspaceFolder, config.workspaceFolderValue, false);
-}
-
-async function addPathToConfigAtScope(configKey: string, value: string, scope: vscode.ConfigurationTarget, valueAtScope: any, createIfNotExist: boolean): Promise<void> {
-    if (!createIfNotExist) {
-        if (!valueAtScope || !(valueAtScope[configKey])) {
-            return;
-        }
-    }
-
-    let newValue: any = {};
-    if (valueAtScope) {
-        newValue = Object.assign({}, valueAtScope);
-    }
-    newValue[configKey] = value;
-    await vscode.workspace.getConfiguration().update("vs-kubernetes", newValue, scope);
 }

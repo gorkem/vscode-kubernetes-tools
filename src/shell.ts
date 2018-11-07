@@ -3,6 +3,8 @@
 import * as vscode from 'vscode';
 import * as shelljs from 'shelljs';
 import * as path from 'path';
+import { getActiveKubeconfig, getToolPath } from './components/config/config';
+import { host } from './host';
 
 export enum Platform {
     Windows,
@@ -64,8 +66,14 @@ function platform(): Platform {
     }
 }
 
+function concatIfBoth(s1: string | undefined, s2: string | undefined): string | undefined {
+    return s1 && s2 ? s1.concat(s2) : undefined;
+}
+
 function home(): string {
-    return process.env['HOME'] || process.env['USERPROFILE'];
+    return process.env['HOME'] ||
+        concatIfBoth(process.env['HOMEDRIVE'], process.env['HOMEPATH']) ||
+        process.env['USERPROFILE'];
 }
 
 function combinePath(basePath: string, relativePath: string) {
@@ -125,8 +133,8 @@ function unquotedPath(path: string): string {
 export function shellEnvironment(baseEnvironment: any): any {
     const env = Object.assign({}, baseEnvironment);
     const pathVariable = pathVariableName(env);
-    for (const tool of ['kubectl', 'helm', 'draft']) {
-        const toolPath = vscode.workspace.getConfiguration('vs-kubernetes')[`vs-kubernetes.${tool}-path`];
+    for (const tool of ['kubectl', 'helm', 'draft', 'minikube']) {
+        const toolPath = getToolPath(host, shell, tool);
         if (toolPath) {
             const toolDirectory = path.dirname(toolPath);
             const currentPath = env[pathVariable];
@@ -134,7 +142,7 @@ export function shellEnvironment(baseEnvironment: any): any {
         }
     }
 
-    const kubeconfig: string = vscode.workspace.getConfiguration('vs-kubernetes')['vs-kubernetes.kubeconfig'];
+    const kubeconfig = getActiveKubeconfig();
     if (kubeconfig) {
         env['KUBECONFIG'] = kubeconfig;
     }
