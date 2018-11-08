@@ -4,7 +4,6 @@ import * as _ from 'lodash';
 
 import * as kuberesources from './kuberesources';
 import { kubefsUri } from './kuberesources.virtualfs';
-import { helmfsUri } from './helm.exec';
 import * as yl from './yaml-support/yaml-locator';
 
 export class KubernetesResourceLinkProvider implements vscode.DocumentLinkProvider {
@@ -112,9 +111,6 @@ function getLinkFromPair(document: vscode.TextDocument, sourceKind: string, node
 
 function getLinkUri(sourceKind: string, node: yl.YamlMappingItem): vscode.Uri | undefined {
     // Things that apply to all source resource types
-    if (key(node) === 'release' && parentKey(node) === 'labels') {
-        return helmfsUri(node.value.raw);
-    }
     if (key(node) === 'namespace' && parentKey(node) === 'metadata') {
         return kubefsUri(null, `ns/${node.value.raw}`, 'yaml');
     }

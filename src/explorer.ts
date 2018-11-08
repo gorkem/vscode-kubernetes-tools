@@ -6,9 +6,7 @@ import * as kubectlUtils from './kubectlUtils';
 import { Host } from './host';
 import * as kuberesources from './kuberesources';
 import { failed } from './errorable';
-import * as helmexec from './helm.exec';
-import { Pod } from './kuberesources.objectmodel';
-import { K8S_RESOURCE_SCHEME, KUBECTL_RESOURCE_AUTHORITY, kubefsUri } from './kuberesources.virtualfs';
+import { kubefsUri } from './kuberesources.virtualfs';
 import { affectsUs } from './components/config/config';
 
 const KUBERNETES_CLUSTER = "vsKubernetes.cluster";
@@ -145,8 +143,7 @@ class KubernetesContextNode implements KubernetesObject {
                 new KubernetesResourceFolder(kuberesources.allKinds.ingress),
                 new KubernetesStorageFolder(),
                 new KubernetesResourceFolder(ingressResource),
-                new KubernetesConfigFolder(),
-                new HelmReleasesFolder(),
+                new KubernetesConfigFolder()
             ];
         });
     }
@@ -466,27 +463,5 @@ class HelmReleaseResource implements KubernetesObject {
         treeItem.contextValue = "vsKubernetes.helmRelease";
         treeItem.iconPath = getIconForHelmRelease(this.status.toLowerCase());
         return treeItem;
-    }
-}
-
-class HelmReleasesFolder extends KubernetesFolder {
-    constructor() {
-        super("Helm Release", "Helm Releases", "vsKubernetes.nonResourceFolder");
-    }
-
-    async getChildren(kubectl: Kubectl, host: Host): Promise<KubernetesObject[]> {
-        if (!helmexec.ensureHelm(helmexec.EnsureMode.Silent)) {
-            return [new DummyObject("Helm client is not installed")];
-        }
-
-        const currentNS = await kubectlUtils.currentNamespace(kubectl);
-
-        const releases = await helmexec.helmListAll(currentNS);
-
-        if (failed(releases)) {
-            return [new DummyObject("Helm list error", releases.error[0])];
-        }
-
-        return releases.result.map((r) => new HelmReleaseResource(r.name, r.status));
     }
 }
