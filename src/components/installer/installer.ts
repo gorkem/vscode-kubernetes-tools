@@ -116,7 +116,7 @@ async function installToolFromTar(tool: string, urlTemplate: string, shell: Shel
 }
 
 function getInstallFolder(shell: Shell, tool: string): string {
-    return path.join(shell.home(), `.vs-kubernetes/tools/${tool}`);
+    return path.join(shell.home(), `.vs-openshift/tools/${tool}`);
 }
 
 async function installFromTar(sourceUrl: string, destinationFolder: string, executablePath: string, configKey: string, shell: Shell): Promise<Errorable<null>> {

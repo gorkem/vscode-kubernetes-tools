@@ -9,7 +9,7 @@ import { ShellResult } from './shell';
 import { helmExecAsync } from './helm.exec';
 import * as config from './components/config/config';
 
-export const K8S_RESOURCE_SCHEME = "k8smsx";
+export const K8S_RESOURCE_SCHEME = "k8srh";
 export const KUBECTL_RESOURCE_AUTHORITY = "loadkubernetescore";
 export const HELM_RESOURCE_AUTHORITY = "helmget";
 
