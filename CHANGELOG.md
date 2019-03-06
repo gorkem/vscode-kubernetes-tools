@@ -108,8 +108,8 @@ Thanks to contributors Brendan Burns, Shreyas Karnik, Bhargav Nookala and Kamesh
 
 ## 0.1.10
 
-* The Load command now defaults to YAML format instead of JSON.  You can override this using the `vs-kubernetes.outputFormat` configuration setting.
-* Added support for specifying an alternate kubeconfig file, using the `vs-kubernetes.kubeconfig` configuration setting.  (If you set this, it overrides the KUBECONFIG environment variable or default kubeconfig path.)
+* The Load command now defaults to YAML format instead of JSON.  You can override this using the `vs-k8s-res-view.outputFormat` configuration setting.
+* Added support for specifying an alternate kubeconfig file, using the `vs-k8s-res-view.kubeconfig` configuration setting.  (If you set this, it overrides the KUBECONFIG environment variable or default kubeconfig path.)
 * Manage individual entries within a config map or secret resource
 * Fixed an issue where you got spurious save prompts when you loaded a resource from the cluster and then closed it without making any changes.
 * Fixed an issue where if you loaded a resource, then loaded it again while the window was still open, the JSON/YAML would get appended to the existing JSON/YAML.
@@ -213,7 +213,7 @@ Thanks to contributors Jinbo Wang and Bhargav Nookala.
 
 ## 0.1.0
 
-Combined `vs-kubernetes` and `vscode-helm` into one extension.
+Combined `vs-k8s-res-view` and `vscode-helm` into one extension.
 
 ## vs-kubernetes change log
 

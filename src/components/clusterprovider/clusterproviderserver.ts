@@ -55,7 +55,7 @@ function handleGetProviderListHtml(action: clusterproviderregistry.ClusterProvid
     If your type of cluster isn't listed here, don't worry. Just add it to your
     kubeconfig file normally (see your cloud or cluster documentation), and it will show
     up in Visual Studio Code automatically. If you're using multiple kubeconfig files,
-    you may need to change the <b>vs-kubernetes &gt; vs-kubernetes.kubeconfig</b> setting
+    you may need to change the <b>vs-k8s-res-view &gt; vs-k8s-res-view.kubeconfig</b> setting
     to refer to the right file.
     </p>
     ` : `
@@ -63,7 +63,7 @@ function handleGetProviderListHtml(action: clusterproviderregistry.ClusterProvid
     If your type of cluster isn't listed here, don't worry. Just create it normally
     (see your cloud or cluster documentation) and add it to your kubeconfig file, and it will show
     up in Visual Studio Code automatically. If you're using multiple kubeconfig files,
-    you may need to change the <b>vs-kubernetes &gt; vs-kubernetes.kubeconfig</b> setting
+    you may need to change the <b>vs-k8s-res-view &gt; vs-k8s-res-view.kubeconfig</b> setting
     to refer to the right file.
     </p>
     `;

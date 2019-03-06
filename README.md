@@ -70,10 +70,10 @@ where `<your-image-prefix-here>` is something like `docker.io/brendanburns`.
 By default, the extension uses the active kubeconfig file -- that is, the file
 to which the KUBECONFIG environment variable points, or the default kubeconfig
 if no KUBECONFIG environment variable exists. You can override this using the
-`vs-kubernetes.kubeconfig` setting in your user or workspace settings.
+`vs-k8s-res-view.kubeconfig` setting in your user or workspace settings.
 
 If you want to swap between multiple kubeconfig files, you can list them in the
-`vs-kubernetes.knownKubeconfigs` configuration setting and switch between them
+`vs-k8s-res-view.knownKubeconfigs` configuration setting and switch between them
 using the `Set Kubeconfig` command.
 
 If you want to skip TLS verification for a particular cluster, you can edit your ~/.kube/config and set the ```insecure-skip-tls-verify: true``` flag under the proper cluster:
@@ -187,24 +187,24 @@ Minikube tools to be installed and available on your PATH.
 
 ## Extension Settings
 
-   * `vs-kubernetes` - Parent for Kubernetes-related extension settings
-       * `vs-kubernetes.namespace` - The namespace to use for all commands
-       * `vs-kubernetes.kubectl-path` - File path to the kubectl binary. Note this is the binary file itself, not just the directory containing the file. On Windows, this must contain the `.exe` extension.
-       * `vs-kubernetes.helm-path` - File path to the helm binary. Note this is the binary file itself, not just the directory containing the file. On Windows, this must contain the `.exe` extension.
-       * `vs-kubernetes.draft-path` - File path to the draft binary. Note this is the binary file itself, not just the directory containing the file. On Windows, this must contain the `.exe` extension.
-       * `vs-kubernetes.minikube-path` - File path to the minikube binary. Note this is the binary file itself, not just the directory containing the file. On Windows, this must contain the `.exe` extension.
+   * `vs-k8s-res-view` - Parent for Kubernetes-related extension settings
+       * `vs-k8s-res-view.namespace` - The namespace to use for all commands
+       * `vs-k8s-res-view.kubectl-path` - File path to the kubectl binary. Note this is the binary file itself, not just the directory containing the file. On Windows, this must contain the `.exe` extension.
+       * `vs-k8s-res-view.helm-path` - File path to the helm binary. Note this is the binary file itself, not just the directory containing the file. On Windows, this must contain the `.exe` extension.
+       * `vs-k8s-res-view.draft-path` - File path to the draft binary. Note this is the binary file itself, not just the directory containing the file. On Windows, this must contain the `.exe` extension.
+       * `vs-k8s-res-view.minikube-path` - File path to the minikube binary. Note this is the binary file itself, not just the directory containing the file. On Windows, this must contain the `.exe` extension.
        * `vs-kubernetes.kubectlVersioning` - By default, the extension uses the `kubectl` binary you provide on the system PATH or in the `vs-kubernetes.kubectl-path` configuration setting. If you set this setting to `infer`, then for each cluster the extension will attempt to identify the cluster version and download a compatible `kubectl` binary.  This improves compatibility if you have multiple Kubernetes versions in play, but may be slower.  **IMPORTANT:** Even if this setting is `infer`, you need a 'bootstrap' copy of `kubectl` on your PATH or at the `vs-kubernetes.kubectl-path` location - we need this to find out the server version so we know which version of `kubectl` to download!  Also note that this setting is checked only when the extension loads; if you change it, you must reload the extension.
-       * `vs-kubernetes.kubeconfig` - File path to the kubeconfig file you want to use. This overrides both the default kubeconfig and the KUBECONFIG environment variable.
-       * `vs-kubernetes.knownKubeconfigs` - An array of file paths of kubeconfig files that you want to be able to quickly switch between using the Set Kubeconfig command.
-       * `vs-kubernetes.autoCleanupOnDebugTerminate` - The flag to control whether to auto cleanup the created deployment and associated pod by the command "Kubernetes: Debug (Launch)". The cleanup action occurs when it failed to start debug session or debug session terminated. If not specified, the extension will prompt for whether to clean up or not. You might choose not to clean up if you wanted to view pod logs, etc.
-       * `vs-kubernetes.outputFormat` - The output format that you prefer to view Kubernetes manifests in. One of "yaml" or "json". Defaults to "yaml".
+       * `vs-k8s-res-view.kubeconfig` - File path to the kubeconfig file you want to use. This overrides both the default kubeconfig and the KUBECONFIG environment variable.
+       * `vs-k8s-res-view.knownKubeconfigs` - An array of file paths of kubeconfig files that you want to be able to quickly switch between using the Set Kubeconfig command.
+       * `vs-k8s-res-view.autoCleanupOnDebugTerminate` - The flag to control whether to auto cleanup the created deployment and associated pod by the command "Kubernetes: Debug (Launch)". The cleanup action occurs when it failed to start debug session or debug session terminated. If not specified, the extension will prompt for whether to clean up or not. You might choose not to clean up if you wanted to view pod logs, etc.
+       * `vs-k8s-res-view.outputFormat` - The output format that you prefer to view Kubernetes manifests in. One of "yaml" or "json". Defaults to "yaml".
    * `vsdocker.imageUser` - Image prefix for docker images e.g. 'docker.io/brendanburns'
    * `disable-lint` - Disable all linting of Kubernetes files
    * `disable-linters` - Disable specific linters by name
 
 ## Custom tool locations
 
-For `kubectl`, `helm` and `draft` the binaries do not need to be on the system PATH. You can configure the extension by specifying the locations using the appropriate `vs-kubernetes -> vs-kubernetes.${tool}-path` configuration setting.  See [Extension Settings](#extension-settings) below.
+For `kubectl`, `helm` and `draft` the binaries do not need to be on the system PATH. You can configure the extension by specifying the locations using the appropriate `vs-k8s-res-view -> vs-k8s-res-view.${tool}-path` configuration setting.  See [Extension Settings](#extension-settings) below.
 
 The extension can install `kubectl`, `helm` and `draft` for you if they are missing - choose **Install dependencies** when you see an error notification for the missing tool.  This will set `kubectl-path`, `helm-path` and `draft-path` entries in your configuration - the programs will *not* be installed on the system PATH, but this will be sufficient for them to work with the extension.
 
@@ -214,18 +214,18 @@ If you are working with Azure Container Services or Azure Kubernetes Services, t
 
 If you move your configuration file between machines with different OSes (and therefore different paths to binaries) you can override the following settings on a per-OS basis by appending `.windows`, `.mac` or `.linux` to the setting name:
 
-  * `vs-kubernetes.kubectl-path`
-  * `vs-kubernetes.helm-path`
-  * `vs-kubernetes.draft-path`
-  * `vs-kubernetes.minikube-path`
+  * `vs-k8s-res-view.kubectl-path`
+  * `vs-k8s-res-view.helm-path`
+  * `vs-k8s-res-view.draft-path`
+  * `vs-k8s-res-view.minikube-path`
 
 For example, consider the following settings file:
 
 ```json
 {
-  "vs-kubernetes": {
-    "vs-kubernetes.kubectl-path": "/home/foo/kubernetes/bin/kubectl",
-    "vs-kubernetes.kubectl-path.windows": "c:\\Users\\foo\\kubernetes\\bin\\kubectl.exe"
+  "vs-k8s-res-view": {
+    "vs-k8s-res-view.kubectl-path": "/home/foo/kubernetes/bin/kubectl",
+    "vs-k8s-res-view.kubectl-path.windows": "c:\\Users\\foo\\kubernetes\\bin\\kubectl.exe"
   }
 }
 ```
