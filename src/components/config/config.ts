@@ -2,17 +2,6 @@ import * as vscode from 'vscode';
 import { Host } from '../../host';
 import { Shell, Platform } from '../../shell';
 
-<<<<<<< HEAD
-const EXTENSION_CONFIG_KEY = "vs-kubernetes";
-const KUBECONFIG_PATH_KEY = "vs-kubernetes.kubeconfig";
-const KNOWN_KUBECONFIGS_KEY = "vs-kubernetes.knownKubeconfigs";
-const KUBECTL_VERSIONING_KEY = "vs-kubernetes.kubectlVersioning";
-
-export enum KubectlVersioning {
-    UserProvided = 1,
-    Infer = 2,
-}
-=======
 const EXTENSION_CONFIG_KEY = "vs-k8s-res-view";
 const KUBECONFIG_PATH_KEY = "vs-k8s-res-view.kubeconfig";
 const KNOWN_KUBECONFIGS_KEY = "vs-k8s-res-view.knownKubeconfigs";
@@ -22,7 +11,6 @@ export enum KubectlVersioning {
     UserProvided = 1,
     Infer = 2,
 }
->>>>>>> Refactor to leave view only, make it work when original ext installed
 
 export async function addPathToConfig(configKey: string, value: string): Promise<void> {
     await setConfigValue(configKey, value);

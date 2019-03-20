@@ -92,7 +92,10 @@
                         },
                         "vs-k8s-res-view.kubectlVersioning": {
                             "type": "string",
-                            "enum": ["user-provided", "infer"],
+                            "enum": [
+                                "user-provided",
+                                "infer"
+                            ],
                             "description": "Whether to use the kubectl binary you provide ('user-provided'), or to automatically download the right version of kubectl for each cluster ('infer')."
                         },
                         "vs-k8s-res-view.kubeconfig": {
