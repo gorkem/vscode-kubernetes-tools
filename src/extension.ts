@@ -33,7 +33,6 @@ import * as kubectlUtils from './kubectlUtils';
 import * as explorer from './explorer';
 import * as helmRepoExplorer from './helm.repoExplorer';
 import { create as minikubeCreate } from './components/clusterprovider/minikube/minikube';
-import * as extensionapi from './extension.api';
 import { dashboardKubernetes } from './components/kubectl/dashboard';
 import { portForwardKubernetes } from './components/kubectl/port-forward';
 import { logsKubernetes, LogsDisplayMode } from './components/kubectl/logs';
