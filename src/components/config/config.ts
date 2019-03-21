@@ -103,7 +103,7 @@ function getPathSetting(host: Host, shell: Shell, baseKey: string): string | und
 }
 
 export function toolPathBaseKey(tool: string): string {
-    return `vs-k8s-res-view.${tool}-path`;
+    return `vs-kubernetes.${tool}-path`;
 }
 
 function osOverrideKey(os: Platform, baseKey: string): string {
@@ -130,7 +130,7 @@ export function getKubectlVersioning(): KubectlVersioning {
 
 // Auto cleanup on debug terminate
 
-const AUTO_CLEANUP_DEBUG_KEY = "vs-k8s-res-view.autoCleanupOnDebugTerminate";
+const AUTO_CLEANUP_DEBUG_KEY = "vs-kubernetes.autoCleanupOnDebugTerminate";
 
 export function getAutoCompleteOnDebugTerminate(): boolean {
     return vscode.workspace.getConfiguration(EXTENSION_CONFIG_KEY)[AUTO_CLEANUP_DEBUG_KEY];
@@ -148,14 +148,21 @@ export function getUseWsl(): boolean {
     return vscode.workspace.getConfiguration(EXTENSION_CONFIG_KEY)[USE_WSL_KEY];
 }
 
+// minikube check upgrade
+const  MK_CHECK_UPGRADE_KEY = 'checkForMinikubeUpgrade';
+
+export function getCheckForMinikubeUpgrade(): boolean {
+    return vscode.workspace.getConfiguration(EXTENSION_CONFIG_KEY)[MK_CHECK_UPGRADE_KEY];
+}
+
 // Other bits and bobs
 
 export function getOutputFormat(): string {
-    return vscode.workspace.getConfiguration(EXTENSION_CONFIG_KEY)['vs-k8s-res-view.outputFormat'];
+    return vscode.workspace.getConfiguration(EXTENSION_CONFIG_KEY)['vs-kubernetes.outputFormat'];
 }
 
 export function getConfiguredNamespace(): string | undefined {
-    return vscode.workspace.getConfiguration(EXTENSION_CONFIG_KEY)['vs-k8s-res-view.namespace'];
+    return vscode.workspace.getConfiguration(EXTENSION_CONFIG_KEY)['vs-kubernetes.namespace'];
 }
 
 export function affectsUs(change: vscode.ConfigurationChangeEvent) {
@@ -175,13 +182,13 @@ export function getDisabledLinters(): string[] {
 
 // if true will try to automatically get the root location of the source code in the container
 export function getNodejsAutoDetectRemoteRoot(): boolean {
-    return vscode.workspace.getConfiguration(EXTENSION_CONFIG_KEY)['vs-k8s-res-view.nodejs-autodetect-remote-root'];
+    return vscode.workspace.getConfiguration(EXTENSION_CONFIG_KEY)['vs-kubernetes.nodejs-autodetect-remote-root'];
 }
 // user specified root location of the source code in the container
 export function getNodejsRemoteRoot(): string {
-    return vscode.workspace.getConfiguration(EXTENSION_CONFIG_KEY)['vs-k8s-res-view.nodejs-remote-root'];
+    return vscode.workspace.getConfiguration(EXTENSION_CONFIG_KEY)['vs-kubernetes.nodejs-remote-root'];
 }
 // remote debugging port for nodejs. Usually 9229
 export function getNodejsDebugPort(): number | undefined {
-    return vscode.workspace.getConfiguration(EXTENSION_CONFIG_KEY)['vs-k8s-res-view.nodejs-debug-port'];
+    return vscode.workspace.getConfiguration(EXTENSION_CONFIG_KEY)['vs-kubernetes.nodejs-debug-port'];
 }
