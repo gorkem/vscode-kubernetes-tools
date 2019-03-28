@@ -25,14 +25,6 @@ export function createKubernetesResource(kind: kuberesources.ResourceKind, id: s
     return new KubernetesResource(kind, id, metadata);
 }
 
-function getIconForHelmRelease(status: string): vscode.Uri {
-    if (status === "deployed") {
-        return vscode.Uri.file(path.join(__dirname, "../../images/helmDeployed.svg"));
-    } else {
-        return vscode.Uri.file(path.join(__dirname, "../../images/helmFailed.svg"));
-    }
-}
-
 function getIconForPodStatus(status: string): vscode.Uri {
     if (status === "running" || status === "completed") {
         return vscode.Uri.file(path.join(__dirname, "../../images/runningPod.svg"));
@@ -133,8 +125,8 @@ class KubernetesContextNode implements KubernetesObject {
         return KUBERNETES_CLUSTER;
     }
 
-    getChildren(kubectl: Kubectl, host: Host): vscode.ProviderResult<KubernetesObject[]> {
-        return kubectlUtils.isOpenshift(kubectl).then( (isOS) => {
+    getChildren(_kubectl: Kubectl, _host: Host): vscode.ProviderResult<KubernetesObject[]> {
+        return kubectlUtils.isOpenshift(_kubectl).then( (isOS) => {
             const ingressResource = isOS ? kuberesources.allKinds.route : kuberesources.allKinds.ingress ;
             return [
                 new KubernetesNamespaceFolder(),
