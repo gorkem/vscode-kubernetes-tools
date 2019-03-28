@@ -57,7 +57,7 @@
         "onView:openshift.vsKubernetesExplorer",
         "onCommand:openshift.vsKubernetesCronJobRunNow",
         "onLanguage:yaml",
-        "onFileSystem:k8smsx",
+        "onFileSystem:k8srh",
         "onDebug"
     ],
     "main": "./out/src/extension",
