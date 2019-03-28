@@ -305,7 +305,7 @@ class KubernetesResource implements KubernetesObject, ResourceNode {
     getTreeItem(): vscode.TreeItem | Thenable<vscode.TreeItem> {
         const treeItem = new vscode.TreeItem(this.id, vscode.TreeItemCollapsibleState.None);
         treeItem.command = {
-            command: "extension.vsKubernetesLoad",
+            command: "openshift.vsKubernetesLoad",
             title: "Load",
             arguments: [this]
         };
@@ -484,7 +484,7 @@ export class KubernetesFileObject implements KubernetesObject {
     getTreeItem(): vscode.TreeItem | Thenable<vscode.TreeItem> {
         const treeItem = new vscode.TreeItem(this.id, vscode.TreeItemCollapsibleState.None);
         treeItem.command = {
-            command: "extension.vsKubernetesLoadConfigMapData",
+            command: "openshift.vsKubernetesLoadConfigMapData",
             title: "Load",
             arguments: [this]
         };
