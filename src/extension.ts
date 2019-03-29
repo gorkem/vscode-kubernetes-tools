@@ -64,7 +64,7 @@ import { apiBroker } from './api/implementation/apibroker';
 let explainActive = false;
 let swaggerSpecPromise: Promise<explainer.SwaggerModel | undefined> | null = null;
 
-const kubernetesDiagnostics = vscode.languages.createDiagnosticCollection("Kubernetes");
+const kubernetesDiagnostics = vscode.languages.createDiagnosticCollection("Kubernetes Resources");
 
 const kubectl = kubectlCreate(config.getKubectlVersioning(), host, fs, shell, installDependencies);
 const minikube = minikubeCreate(host, fs, shell, installDependencies);
