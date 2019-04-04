@@ -1,4 +1,6 @@
-This repository is a for of https://github.com/Azure/vscode-kubernetes-tools.git
+This repository is a fork of https://github.com/Azure/vscode-kubernetes-tools.git
+and has dependency on [OpenShift Connector Extension](https://github.com/redhat-developer/vscode-openshift-tools)
+to fix issue #1 explained below.
 
 # Why this fork has been created?
 
@@ -11,7 +13,7 @@ for developers to crate, build and deploy applications on OpenShift.
 
 ## Issue #1: Views cannot be shared between Views Containers
 
-This is not exactly original extension issue, but rather VSCode issue. While we were 
+This is not exactly original extension issue, but rather VSCode issue. While we were
 creating Views Container for OpenShift we wanted to have two views in it. One is
 OpenShift Application Explorer and another is Kubernetes Clusters. It turned out
 there is a way to put view from one extension to View Container defined by another
@@ -21,7 +23,7 @@ is not activated for the first time and goes blank after that.
 
 ## Issue #2: Original Kubernetes Extension is not aware of OpenShift Specific resources
 
-OpenShift has some differences for Kubernetes like: 
+OpenShift has some differences for Kubernetes like:
 - namespaces are replaced with projects
 - routes used instead of ingresses
 - more strict security policies than default Kubernetes
@@ -44,8 +46,10 @@ fixing issues listed above by:
 * adding OpenShift Routes resources to the view
 * with different View's identifier now it is possible to have it always visible
   on OpenShift View's Container
+* adding dependency on OpenShift Connector extension to show Kubernetes view
+  in OpenShift Views Container.
 
-This fork also has changes to allow it work along with original extension.
+This fork also has changes to allow it to work along with original extension.
 
 # Visual Studio Code Kubernetes Tools
 [![Build Status](https://travis-ci.org/Azure/vscode-kubernetes-tools.svg?branch=master)](https://travis-ci.org/Azure/vscode-kubernetes-tools)
