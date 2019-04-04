@@ -39,6 +39,8 @@ for OpenShift. There is no way to fix that using extension provided features.
 Helm related nodes and commands just clutters UI when using original extension
 With OpenShift and **there is no way to hide them from UI**.
 
+## What was changed in this fork
+
 This fork is focusing on providing Kubernetes Resources browsing features only and
 fixing issues listed above by:
 * removing Helm and other features not related to resources browsing
