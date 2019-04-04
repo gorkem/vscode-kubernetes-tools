@@ -1,3 +1,58 @@
+This repository is a fork of https://github.com/Azure/vscode-kubernetes-tools.git
+and has dependency on [OpenShift Connector Extension](https://github.com/redhat-developer/vscode-openshift-tools)
+to fix issue #1 explained below.
+
+# Why this fork has been created?
+
+OpenShift is an enterprise Kubernetes container platform. Naturally it would be easier
+to start developing OpenShift extension by using existing ones for Kubernetes to
+work with OpenShift clusters. But not everything usually go as planned, because
+OpenShift has some differences that makes it hard to reuse extensions for vanilla
+Kubernetes. This fork was created to address those issues while making extension
+for developers to crate, build and deploy applications on OpenShift.
+
+## Issue #1: Views cannot be shared between Views Containers
+
+This is not exactly original extension issue, but rather VSCode issue. While we were
+creating Views Container for OpenShift we wanted to have two views in it. One is
+OpenShift Application Explorer and another is Kubernetes Clusters. It turned out
+there is a way to put view from one extension to View Container defined by another
+one using declaration in extension manifest. In our case we added Clusters view
+into OpenShift Views container. It works fine until Kubernetes Views Container
+is not activated for the first time and goes blank after that.
+
+## Issue #2: Original Kubernetes Extension is not aware of OpenShift Specific resources
+
+OpenShift has some differences for Kubernetes like:
+- namespaces are replaced with projects
+- routes used instead of ingresses
+- more strict security policies than default Kubernetes
+All that leads to Original Kubernetes view missing OpenShift specific
+resources or could not show Kubernetes ones because developer account has not
+enough permissions to see them. **There is no way to extend original extension
+to make it aware of OpenShift specific resources**.
+
+## Issue #3: Helm is not supported OOTB
+
+Helm support from original requires tiler to be installed which is not the case
+for OpenShift. There is no way to fix that using extension provided features.
+Helm related nodes and commands just clutters UI when using original extension
+With OpenShift and **there is no way to hide them from UI**.
+
+## What was changed in this fork
+
+This fork is focusing on providing Kubernetes Resources browsing features only and
+fixing issues listed above by:
+* removing Helm and other features not related to resources browsing
+* displaying OpenShift Projects in place of Kubernetes namespaces
+* adding OpenShift Routes resources to the view
+* with different View's identifier now it is possible to have it always visible
+  on OpenShift View's Container
+* adding dependency on OpenShift Connector extension to show Kubernetes view
+  in OpenShift Views Container.
+
+This fork also has changes to allow it to work along with original extension.
+
 # Visual Studio Code Kubernetes Tools
 [![Build Status](https://travis-ci.org/Azure/vscode-kubernetes-tools.svg?branch=master)](https://travis-ci.org/Azure/vscode-kubernetes-tools)
 
